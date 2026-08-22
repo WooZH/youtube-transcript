@@ -1,0 +1,1 @@
+{"root":["./src/background/index.ts","./src/content/index.ts","./src/lib/captions.ts","./src/lib/native-transcribe.ts","./src/popup/popup.tsx","./src/popup/index.tsx","./src/types/css.d.ts","./src/types/transcript.ts"],"version":"5.7.3"}
