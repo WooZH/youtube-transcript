@@ -33,3 +33,4 @@ __pycache__/
 
 # Models (large binary files)
 *.bin
+.gstack/

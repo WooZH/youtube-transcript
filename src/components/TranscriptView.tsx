@@ -5,6 +5,7 @@ import { ExportMenu } from "./ExportMenu";
 import { useState, useMemo, useRef, useCallback } from "react";
 import { formatDuration } from "../lib/utils";
 import { useLanguage } from "../lib/i18n";
+import { Button } from "./primitives";
 
 interface TranscriptViewProps {
   transcript: Transcript;
@@ -111,27 +112,29 @@ export function TranscriptView({ transcript, onReset }: TranscriptViewProps) {
         />
 
         <div className="toolbar-actions">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={copyPlain}
-            className="action-button"
             title={t("copyText")}
           >
             {copySuccess ? t("copied") : t("copy")}
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={copyWithTimestamps}
-            className="action-button"
             title={t("copyTimestamps")}
           >
             {t("copyTimestamps")}
-          </button>
+          </Button>
 
           <ExportMenu transcript={transcript} />
 
-          <button onClick={onReset} className="action-button">
+          <Button variant="secondary" size="sm" onClick={onReset}>
             {t("newBtn")}
-          </button>
+          </Button>
         </div>
       </div>
 

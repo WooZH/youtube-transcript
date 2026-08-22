@@ -1,6 +1,7 @@
 import type { VideoInfo } from "../types/transcript";
 import { formatDuration } from "../lib/utils";
 import { useLanguage } from "../lib/i18n";
+import { Button } from "./primitives";
 
 interface VideoPreviewProps {
   videoInfo: VideoInfo;
@@ -48,12 +49,12 @@ export function VideoPreview({
       </div>
 
       <div className="video-preview-actions">
-        <button onClick={onStartTranscribe} className="transcribe-button">
+        <Button variant="primary" size="lg" onClick={onStartTranscribe}>
           {t("transcribe")}
-        </button>
-        <button onClick={onReset} className="action-button">
+        </Button>
+        <Button variant="secondary" size="sm" onClick={onReset}>
           {t("back")}
-        </button>
+        </Button>
       </div>
     </div>
   );

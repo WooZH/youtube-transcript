@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import type { TranscriptSegment } from "../types/transcript";
 import { useLanguage } from "../lib/i18n";
+import { SearchInput, Button } from "./primitives";
 
 interface TranscriptSearchProps {
   query: string;
@@ -38,35 +39,35 @@ export function TranscriptSearch({
 
   return (
     <div className="search-container">
-      <input
-        type="text"
+      <SearchInput
         value={query}
         onChange={(e) => {
           onChange(e.target.value);
           setCurrentMatchIndex(0);
         }}
         placeholder={t("searchPlaceholder")}
-        className="search-input"
       />
       {query.trim() && matchCount > 0 && (
         <div className="search-nav">
           <span className="search-count">
             {currentMatchIndex + 1} / {matchCount}
           </span>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handlePrevMatch}
-            className="search-nav-button"
             title={t("prevMatch")}
           >
             ↑
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleNextMatch}
-            className="search-nav-button"
             title={t("nextMatch")}
           >
             ↓
-          </button>
+          </Button>
         </div>
       )}
       {query.trim() && matchCount === 0 && (

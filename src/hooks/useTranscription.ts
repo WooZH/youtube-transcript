@@ -16,7 +16,7 @@ export function useTranscription() {
   const [state, setState] = useState<JobState>({ type: "idle" });
   const [workerStatus, setWorkerStatus] = useState<string>("");
   const unlistenersRef = useRef<(() => void)[]>([]);
-  const timingRef = useRef<{ downloadTime?: number; transcribeStartTime?: number }>({});
+  const timingRef = useRef<{ downloadStart?: number; downloadTime?: number; transcribeStart?: number; transcribeTime?: number }>({});
 
   const cleanup = useCallback(() => {
     unlistenersRef.current.forEach((unlisten) => unlisten());
@@ -48,8 +48,8 @@ export function useTranscription() {
         if (timingRef.current.downloadStart && !timingRef.current.downloadTime) {
           timingRef.current.downloadTime = (Date.now() - timingRef.current.downloadStart) / 1000;
         }
-        if (!timingRef.current.transcribeStartTime) {
-          timingRef.current.transcribeStartTime = Date.now();
+        if (!timingRef.current.transcribeStart) {
+          timingRef.current.transcribeStart = Date.now();
         }
         setState({ type: "transcribing", progress: update.progress });
       } else if (stage === "preparing") {
@@ -71,8 +71,8 @@ export function useTranscription() {
     });
 
     const unlistenResult = await onResult((transcript: Transcript) => {
-      const transcribeTime = timingRef.current.transcribeStartTime
-        ? (Date.now() - timingRef.current.transcribeStartTime) / 1000
+      const transcribeTime = timingRef.current.transcribeStart
+        ? (Date.now() - timingRef.current.transcribeStart) / 1000
         : undefined;
       const enrichedTranscript: Transcript = {
         ...transcript,

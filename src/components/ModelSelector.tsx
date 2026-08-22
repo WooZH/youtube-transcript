@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useLanguage } from "../lib/i18n";
 import { checkModelDownloaded } from "../lib/api";
+import { Button } from "./primitives";
 
 export interface WhisperModel {
   id: string;
@@ -49,6 +50,9 @@ export function ModelSelector({ selectedModel, onSelect }: ModelSelectorProps) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [downloaded, setDownloaded] = useState<Record<string, boolean>>({});
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
 
   const current = WHISPER_MODELS.find((m) => m.id === selectedModel) || WHISPER_MODELS[2];
 
@@ -65,16 +69,76 @@ export function ModelSelector({ selectedModel, onSelect }: ModelSelectorProps) {
     return () => { cancelled = true; };
   }, []);
 
+  const getFocusableElements = useCallback(() => {
+    if (!modalRef.current) return [];
+    return Array.from(
+      modalRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+    );
+  }, []);
+
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+
+    const firstFocusable = getFocusableElements()[0];
+    if (firstFocusable) {
+      firstFocusable.focus();
+    }
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setOpen(false);
+        return;
+      }
+      if (e.key === "Tab") {
+        const focusable = getFocusableElements();
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open, getFocusableElements]);
+
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.activeElement as HTMLElement | null;
+    const triggerAtOpen = triggerRef.current;
+    return () => {
+      if (triggerAtOpen) {
+        triggerAtOpen.focus();
+      } else if (prev && typeof prev.focus === "function") {
+        prev.focus();
+      }
+    };
   }, [open]);
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
   return (
     <>
-      <button className="model-selector-toggle" onClick={() => setOpen(true)} type="button">
+      <button
+        ref={triggerRef}
+        className="model-selector-toggle"
+        onClick={handleOpen}
+        type="button"
+      >
         <span className="model-selector-label">{t("model")}:</span>
         <span className="model-selector-name">{current.name}</span>
         <span className="model-selector-size">{current.size}</span>
@@ -82,11 +146,20 @@ export function ModelSelector({ selectedModel, onSelect }: ModelSelectorProps) {
       </button>
 
       {open && createPortal(
-        <div className="modal-overlay" onClick={() => setOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay" onClick={handleClose}>
+          <div
+            ref={modalRef}
+            className="modal-content"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("selectModel")}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
               <h3 className="modal-title">{t("selectModel")}</h3>
-              <button className="modal-close" onClick={() => setOpen(false)}>×</button>
+              <Button ref={closeBtnRef} variant="ghost" size="sm" onClick={handleClose}>
+                ×
+              </Button>
             </div>
             <div className="modal-body">
               {WHISPER_MODELS.map((model) => (

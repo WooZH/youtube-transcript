@@ -55,6 +55,7 @@ const translations = {
   downloaded: { zh: "已下载", en: "Downloaded" },
   selectModel: { zh: "选择模型", en: "Select Model" },
   exportSuccess: { zh: "导出成功", en: "Export successful" },
+  exportFailed: { zh: "导出失败", en: "Export failed" },
   speed: { zh: "速度", en: "Speed" },
   accuracy: { zh: "精度", en: "Accuracy" },
 
@@ -81,7 +82,7 @@ const translations = {
   pasteUrls: { zh: "粘贴 YouTube 链接", en: "Paste YouTube URLs" },
   addUrls: { zh: "添加链接", en: "Add URLs" },
   exportAll: { zh: "全部导出", en: "Export All" },
-  clearFailed: { zh: "清除失败", en: "Clear Failed" },
+  clearFinished: { zh: "清除已完成", en: "Clear Finished" },
   stopQueue: { zh: "停止队列", en: "Stop Queue" },
   startAll: { zh: "全部开始", en: "Start All" },
   cancelAll: { zh: "全部取消", en: "Cancel All" },
@@ -102,6 +103,10 @@ const translations = {
   processingState: { zh: "处理中", en: "Processing" },
   completed: { zh: "已完成", en: "Completed" },
   failed: { zh: "失败", en: "Failed" },
+  invalidYouTubeUrl: { zh: "不是 YouTube 链接", en: "Not a YouTube URL" },
+  invalidUrl: { zh: "无效链接", en: "Invalid URL" },
+  videosAdded: { zh: "个视频已添加", en: "videos added" },
+  urlsRejected: { zh: "个链接被拒绝", en: "URLs rejected" },
 
   // HistoryView
   historyTitle: { zh: "历史记录", en: "History" },
@@ -113,7 +118,9 @@ const translations = {
   yesterday: { zh: "昨天", en: "Yesterday" },
   last7Days: { zh: "近 7 天", en: "Previous 7 Days" },
   older: { zh: "更早", en: "Older" },
-  deleteConfirm: { zh: "确定删除？", en: "Delete" },
+  deleteConfirm: { zh: "删除", en: "Delete" },
+  deleted: { zh: "已删除", en: "Deleted" },
+  deleteFailed: { zh: "删除失败", en: "Delete failed" },
   loadError: { zh: "无法打开本地历史记录。", en: "Unable to open local history." },
   loadError2: { zh: "无法加载此字幕。", en: "This transcript could not be loaded." },
   dlLabel: { zh: "下载", en: "DL" },

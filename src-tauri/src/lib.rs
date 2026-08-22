@@ -531,12 +531,25 @@ async fn save_settings(app: AppHandle, settings: serde_json::Value) -> Result<()
 }
 
 #[tauri::command]
-async fn check_model_downloaded(model: String) -> Result<bool, String> {
-    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
-    let models_dir = PathBuf::from(home)
-        .join("Library/Application Support/YouTube Transcript/models/whisper-cpp");
-    let model_path = models_dir.join(format!("ggml-{}.bin", model));
-    Ok(model_path.exists())
+async fn check_model_downloaded(app: AppHandle, model: String) -> Result<bool, String> {
+    if let Ok(resource_dir) = app.path().resource_dir() {
+        let bundled = resource_dir
+            .join("worker/models/whisper-cpp")
+            .join(format!("ggml-{}.bin", model));
+        if bundled.exists() {
+            return Ok(true);
+        }
+    }
+    let user = if cfg!(target_os = "windows") {
+        let base = std::env::var("APPDATA").unwrap_or_else(|_| ".".to_string());
+        PathBuf::from(base)
+            .join("YouTube Transcript/models/whisper-cpp")
+    } else {
+        let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+        PathBuf::from(home)
+            .join("Library/Application Support/YouTube Transcript/models/whisper-cpp")
+    };
+    Ok(user.join(format!("ggml-{}.bin", model)).exists())
 }
 
 #[tauri::command]
@@ -642,21 +655,27 @@ fn get_worker_path(app: &AppHandle) -> Result<String, String> {
 }
 
 fn get_python_path(app: &AppHandle) -> String {
+    let venv_rel = if cfg!(target_os = "windows") {
+        "worker/.venv/Scripts/python.exe"
+    } else {
+        "worker/.venv/bin/python3"
+    };
+
     let resource_dir = app.path().resource_dir().ok();
     if let Some(dir) = resource_dir {
-        let venv_python = dir.join("worker/.venv/bin/python3");
+        let venv_python = dir.join(venv_rel);
         if venv_python.exists() {
             return venv_python.to_string_lossy().to_string();
         }
     }
 
     if let Ok(cwd) = std::env::current_dir() {
-        let venv_python = cwd.join("worker/.venv/bin/python3");
+        let venv_python = cwd.join(venv_rel);
         if venv_python.exists() {
             return venv_python.to_string_lossy().to_string();
         }
 
-        let parent_python = cwd.parent().unwrap_or(&cwd).join("worker/.venv/bin/python3");
+        let parent_python = cwd.parent().unwrap_or(&cwd).join(venv_rel);
         if parent_python.exists() {
             return parent_python.to_string_lossy().to_string();
         }

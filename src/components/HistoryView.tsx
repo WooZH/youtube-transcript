@@ -1,53 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import type { Transcript } from "../types/transcript";
-import {
-  listTranscripts,
-  searchTranscripts,
-  getTranscriptData,
-  deleteTranscript,
-  type TranscriptMetadata,
-} from "../lib/api";
-import { formatDuration } from "../lib/format";
+import type { TranscriptMetadata, TranscriptData } from "../lib/api";
+import { Button, Input, Badge } from "./primitives";
 import { useLanguage } from "../lib/i18n";
-
-function formatDate(timestamp: number, t: (key: string) => string): string {
-  const date = new Date(timestamp);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-  if (days === 0) {
-    return t("today");
-  } else if (days === 1) {
-    return t("yesterday");
-  } else if (days < 7) {
-    return t("last7Days");
-  } else {
-    return t("older");
-  }
-}
-
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  if (m > 0) {
-    return `${m}m ${s}s`;
-  }
-  return `${s}s`;
-}
-
-function groupByDate(items: TranscriptMetadata[], t: (key: string) => string): Map<string, TranscriptMetadata[]> {
-  const groups = new Map<string, TranscriptMetadata[]>();
-
-  for (const item of items) {
-    const label = formatDate(item.createdAt, t);
-    const existing = groups.get(label) || [];
-    existing.push(item);
-    groups.set(label, existing);
-  }
-
-  return groups;
-}
+import { useToast } from "./Toast";
 
 interface HistoryViewProps {
   onViewTranscript: (transcript: Transcript) => void;
@@ -55,34 +12,46 @@ interface HistoryViewProps {
 
 export function HistoryView({ onViewTranscript }: HistoryViewProps) {
   const { t } = useLanguage();
-  const [transcripts, setTranscripts] = useState<TranscriptMetadata[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const { showToast } = useToast();
+  const [entries, setEntries] = useState<TranscriptMetadata[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const loadTranscripts = useCallback(async () => {
+  const loadHistory = useCallback(async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
-      const data = searchQuery
-        ? await searchTranscripts(searchQuery)
-        : await listTranscripts();
-      setTranscripts(data);
-    } catch (err) {
+      const result = await invoke<TranscriptMetadata[]>("list_transcripts");
+      setEntries(result);
+    } catch (e) {
+      console.error("Failed to load history:", e);
       setError(t("loadError"));
-      console.error("Failed to load transcripts:", err);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [searchQuery, t]);
+  }, [t]);
 
   useEffect(() => {
-    loadTranscripts();
-  }, [loadTranscripts]);
+    loadHistory();
+  }, [loadHistory]);
 
-  const handleOpen = async (metadata: TranscriptMetadata) => {
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     try {
-      const { data } = await getTranscriptData(metadata.id);
+      await invoke("delete_transcript", { transcriptId: id });
+      setEntries((prev) => prev.filter((entry) => entry.id !== id));
+      showToast(t("deleted"));
+    } catch (err) {
+      console.error("Delete failed:", err);
+      showToast(t("deleteFailed"));
+    }
+  };
+
+  const handleOpenTranscript = async (entry: TranscriptMetadata) => {
+    try {
+      const [, data] = await invoke<[TranscriptMetadata, TranscriptData]>("get_transcript_data", { transcriptId: entry.id });
+
       const transcript: Transcript = {
         videoId: data.videoId,
         title: data.title,
@@ -95,145 +64,160 @@ export function HistoryView({ onViewTranscript }: HistoryViewProps) {
       };
       onViewTranscript(transcript);
     } catch (err) {
-      setError(t("loadError2"));
-      console.error("Failed to load transcript:", err);
+      console.error("Failed to open transcript:", err);
+      showToast(t("loadError2"));
     }
   };
 
-  const handleDelete = async (id: string, title: string) => {
-    if (!window.confirm(`${t("deleteConfirm")} "${title}"?`)) return;
-    try {
-      await deleteTranscript(id);
-      setTranscripts((prev) => prev.filter((item) => item.id !== id));
-    } catch (err) {
-      console.error("Failed to delete transcript:", err);
-    }
+  const formatDate = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return t("today");
+    if (diffDays === 1) return t("yesterday");
+    if (diffDays < 7) return t("last7Days");
+    return t("older");
   };
 
-  const groupedTranscripts = groupByDate(transcripts, t);
+  const formatDuration = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`;
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.round(seconds % 60);
+    return `${mins}m ${secs}s`;
+  };
+
+  const groupByDate = (items: TranscriptMetadata[]) => {
+    const groups: Record<string, TranscriptMetadata[]> = {};
+    for (const item of items) {
+      const label = formatDate(item.createdAt);
+      if (!groups[label]) groups[label] = [];
+      groups[label].push(item);
+    }
+    return Object.entries(groups);
+  };
+
+  const filteredEntries = searchQuery.trim()
+    ? entries.filter(
+        (entry) =>
+          entry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (entry.channel && entry.channel.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : entries;
+
+  const groupedEntries = groupByDate(filteredEntries);
+
+  if (loading) {
+    return (
+      <div className="history-view">
+        <div className="history-loading">
+          <div className="progress-spinner" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="history-view">
+        <div className="history-error">
+          <p>{error}</p>
+          <Button variant="primary" onClick={loadHistory}>
+            {t("refresh")}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (entries.length === 0) {
+    return (
+      <div className="history-view">
+        <div className="history-header">
+          <h2 className="history-title">{t("historyTitle")}</h2>
+        </div>
+        <div className="empty-state">
+          <div className="empty-state-icon">📋</div>
+          <div className="empty-state-message">{t("noHistory")}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="history-view">
       <div className="history-header">
         <h2 className="history-title">{t("historyTitle")}</h2>
-        <button
-          className="history-refresh-button"
-          onClick={loadTranscripts}
-          title={t("refresh")}
-        >
-          ↻
-        </button>
+        <div className="history-header-actions">
+          <Input
+            inputSize="sm"
+            placeholder={t("searchHistory")}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <Button variant="ghost" size="sm" onClick={loadHistory}>
+            {t("refresh")}
+          </Button>
+        </div>
       </div>
 
-      <div className="history-search">
-        <input
-          type="text"
-          className="history-search-input"
-          placeholder={t("searchHistory")}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-
-      {isLoading && (
-        <div className="history-loading">
-          <div className="progress-spinner" />
+      {searchQuery.trim() && filteredEntries.length === 0 && (
+        <div className="history-list-empty">
+          <div className="empty-state">
+            <div className="empty-state-icon">🔍</div>
+            <div className="empty-state-message">{t("noMatch")}</div>
+          </div>
         </div>
       )}
 
-      {error && (
-        <div className="history-error">
-          <p>{error}</p>
-          <button onClick={loadTranscripts} className="retry-button">
-            {t("tryAgain")}
-          </button>
-        </div>
-      )}
-
-      {!isLoading && !error && transcripts.length === 0 && (
-        <div className="history-empty">
-          <p className="history-empty-text">
-            {searchQuery
-              ? t("noMatch")
-              : t("noHistory")}
-          </p>
-        </div>
-      )}
-
-      {!isLoading && !error && transcripts.length > 0 && (
-        <div className="history-list">
-          {Array.from(groupedTranscripts.entries()).map(([label, items]) => (
-            <div key={label} className="history-group">
-              <div className="history-group-header">
-                <h3 className="history-group-label">{label}</h3>
-                <div className="history-group-divider" />
+      {groupedEntries.map(([label, groupEntries]) => (
+        <div key={label} className="history-date-group">
+          <div className="history-date-label">{label}</div>
+          {groupEntries.map((entry) => (
+            <div
+              key={entry.id}
+              className="history-item"
+              onClick={() => handleOpenTranscript(entry)}
+            >
+              <div className="history-item-content">
+                <div className="history-item-title">{entry.title}</div>
+                <div className="history-item-meta">
+                  {entry.channel && (
+                    <span className="history-item-channel">{entry.channel}</span>
+                  )}
+                  <Badge
+                    variant={entry.source === "whisper" ? "accent" : "muted"}
+                  >
+                    {entry.source === "whisper"
+                      ? t("whisperLabel")
+                      : t("youtubeCaptions")}
+                  </Badge>
+                </div>
+                {(entry.downloadTime != null || entry.transcribeTime != null) && (
+                  <div className="history-item-timing">
+                    {entry.downloadTime != null && (
+                      <span>{t("dlLabel")}: {formatDuration(entry.downloadTime)}</span>
+                    )}
+                    {entry.transcribeTime != null && (
+                      <span>{t("trLabel")}: {formatDuration(entry.transcribeTime)}</span>
+                    )}
+                  </div>
+                )}
               </div>
-
-              {items.map((metadata) => (
-                <HistoryItem
-                  key={metadata.id}
-                  metadata={metadata}
-                  onOpen={() => handleOpen(metadata)}
-                  onDelete={() => handleDelete(metadata.id, metadata.title)}
-                  t={t}
-                />
-              ))}
+              <div className="history-item-actions" onClick={(e) => e.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => handleDelete(entry.id, e)}
+                >
+                  {t("deleteConfirm")}
+                </Button>
+              </div>
             </div>
           ))}
         </div>
-      )}
-    </div>
-  );
-}
-
-interface HistoryItemProps {
-  metadata: TranscriptMetadata;
-  onOpen: () => void;
-  onDelete: () => void;
-  t: (key: string) => string;
-}
-
-function HistoryItem({ metadata, onOpen, onDelete, t }: HistoryItemProps) {
-  return (
-    <div className="history-item">
-      <div className="history-item-content" onClick={onOpen}>
-        <div className="history-item-title">{metadata.title}</div>
-        <div className="history-item-meta">
-          {metadata.channel && (
-            <span className="history-item-channel">{metadata.channel}</span>
-          )}
-          <span className="history-item-separator">·</span>
-          {metadata.duration && (
-            <span className="history-item-duration">
-              {formatDuration(metadata.duration)}
-            </span>
-          )}
-          <span className="history-item-separator">·</span>
-          <span className="history-item-source">
-            {metadata.source === "captions" ? t("captions") : t("whisperLabel")}
-          </span>
-          {(metadata.downloadTime || metadata.transcribeTime) && (
-            <>
-              <span className="history-item-separator">·</span>
-              <span className="history-item-timing">
-                {metadata.downloadTime && `${t("dlLabel")}: ${formatTime(metadata.downloadTime)}`}
-                {metadata.downloadTime && metadata.transcribeTime && " "}
-                {metadata.transcribeTime && `${t("trLabel")}: ${formatTime(metadata.transcribeTime)}`}
-              </span>
-            </>
-          )}
-        </div>
-      </div>
-      <button
-        className="history-item-delete"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        title={t("deleteConfirm")}
-      >
-        ×
-      </button>
+      ))}
     </div>
   );
 }

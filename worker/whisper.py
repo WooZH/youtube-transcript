@@ -23,16 +23,36 @@ def get_yt_dlp_cmd():
     return [sys.executable, "-m", "yt_dlp"]
 
 
+def get_ffmpeg_args():
+    """Args pointing yt-dlp at an ffmpeg bundled next to the worker, if present."""
+    for name in ("ffmpeg.exe", "ffmpeg") if sys.platform == "win32" else ("ffmpeg",):
+        candidate = Path(__file__).parent / "bin" / name
+        if candidate.exists():
+            return ["--ffmpeg-location", str(candidate)]
+    return []
+
+
 def get_cache_dir() -> Path:
     """Get the cache directory for temporary files."""
-    cache_dir = Path.home() / "Library" / "Caches" / "YouTube Transcript" / "jobs"
+    if sys.platform == "win32":
+        base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
+        cache_dir = base / "YouTube Transcript" / "jobs"
+    else:
+        cache_dir = Path.home() / "Library" / "Caches" / "YouTube Transcript" / "jobs"
     cache_dir.mkdir(parents=True, exist_ok=True)
     return cache_dir
 
 
 def get_models_dir() -> Path:
-    """Get the models directory."""
-    models_dir = Path.home() / "Library" / "Application Support" / "YouTube Transcript" / "models"
+    """Get the models directory. Checks bundled models first, then user data dir."""
+    bundled = Path(__file__).parent / "models" / "whisper-cpp"
+    if bundled.exists() and any(bundled.glob("*.bin")):
+        return bundled.parent
+    if sys.platform == "win32":
+        base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+        models_dir = base / "YouTube Transcript" / "models"
+    else:
+        models_dir = Path.home() / "Library" / "Application Support" / "YouTube Transcript" / "models"
     models_dir.mkdir(parents=True, exist_ok=True)
     return models_dir
 
@@ -57,6 +77,7 @@ def download_audio(url: str, job_id: str, progress_callback=None) -> Path:
         "--no-warnings",
         "--newline",
         "-N", "10",
+        *get_ffmpeg_args(),
         "--postprocessor-args", "ffmpeg:-ar 16000 -ac 1",
         "-o", output_template,
         url,

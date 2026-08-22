@@ -4,6 +4,8 @@ import { useTranscriptionQueue } from "../hooks/useTranscriptionQueue";
 import { exportTranscript } from "../lib/api";
 import { formatDuration } from "../lib/format";
 import { useLanguage } from "../lib/i18n";
+import { useToast } from "./Toast";
+import { Button, Textarea, Badge } from "./primitives";
 
 function sanitizeFilename(title: string): string {
   return title
@@ -28,7 +30,7 @@ function getStateIcon(state: TranscriptionJob["state"]): string {
   }
 }
 
-function getStateLabel(state: TranscriptionJob["state"], t: (key: string) => string): string {
+function getStateLabel(state: TranscriptionJob["state"], t: (key: any) => string): string {
   switch (state) {
     case "queued": return t("waiting");
     case "fetching-metadata": return t("fetchingInfo");
@@ -50,6 +52,7 @@ interface BatchViewProps {
 
 export function BatchView({ onViewTranscript }: BatchViewProps) {
   const { t } = useLanguage();
+  const { showToast } = useToast();
   const {
     jobs,
     queueState,
@@ -65,15 +68,51 @@ export function BatchView({ onViewTranscript }: BatchViewProps) {
   const [inputText, setInputText] = useState("");
 
   const handleAddUrls = () => {
-    const urls = inputText
+    const lines = inputText
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line.length > 0);
 
-    if (urls.length > 0) {
-      addJobs(urls);
-      setInputText("");
+    if (lines.length === 0) return;
+
+    const validUrls: string[] = [];
+    const rejected: { url: string; reason: string }[] = [];
+
+    for (const line of lines) {
+      try {
+        const urlObj = new URL(line);
+        const isYT =
+          urlObj.hostname === "youtube.com" ||
+          urlObj.hostname === "www.youtube.com" ||
+          urlObj.hostname === "youtu.be" ||
+          urlObj.hostname === "m.youtube.com";
+        if (isYT) {
+          validUrls.push(line);
+        } else {
+          rejected.push({ url: line, reason: t("invalidYouTubeUrl") });
+        }
+      } catch {
+        rejected.push({ url: line, reason: t("invalidUrl") });
+      }
     }
+
+    if (validUrls.length > 0) {
+      addJobs(validUrls);
+    }
+
+    if (rejected.length > 0) {
+      const summary = validUrls.length > 0
+        ? `${validUrls.length} ${t("videosAdded")}. `
+        : "";
+      const reasons = rejected
+        .map((r) => `\u2022 ${r.url} \u2014 ${r.reason}`)
+        .join("\n");
+      showToast(`${summary}${rejected.length} ${t("urlsRejected")}:\n${reasons}`);
+    } else if (validUrls.length > 0) {
+      showToast(`${validUrls.length} ${t("videosAdded")}`);
+    }
+
+    setInputText("");
   };
 
   const handleExportAll = async () => {
@@ -114,61 +153,66 @@ export function BatchView({ onViewTranscript }: BatchViewProps) {
 
       <div className="batch-input-section">
         <label className="batch-input-label">{t("pasteUrls")}</label>
-        <textarea
-          className="batch-textarea"
+        <Textarea
           value={inputText}
           onChange={(e) => setInputText(e.target.value)}
           placeholder={"https://youtube.com/watch?v=A\nhttps://youtube.com/watch?v=B\nhttps://youtu.be/C"}
           rows={6}
         />
         <div className="batch-input-actions">
-          <button
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleAddUrls}
-            className="batch-button batch-button-secondary"
             disabled={!inputText.trim()}
           >
             {t("addUrls")}
-          </button>
+          </Button>
           <div className="batch-primary-actions">
             {hasCompletedJobs && (
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={handleExportAll}
-                className="batch-button batch-button-secondary"
               >
                 {t("exportAll")}
-              </button>
+              </Button>
             )}
             {hasFailedJobs && (
-              <button
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={clearCompleted}
-                className="batch-button batch-button-secondary"
               >
-                {t("clearFailed")}
-              </button>
+                {t("clearFinished")}
+              </Button>
             )}
             {isActive ? (
-              <button
+              <Button
+                variant="danger"
+                size="sm"
                 onClick={stopQueue}
-                className="batch-button batch-button-warning"
               >
                 {t("stopQueue")}
-              </button>
+              </Button>
             ) : (
-              <button
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={startQueue}
-                className="batch-button batch-button-primary"
                 disabled={!hasQueuedJobs}
               >
                 {t("startAll")}
-              </button>
+              </Button>
             )}
-            <button
+            <Button
+              variant="danger"
+              size="sm"
               onClick={cancelAllJobs}
-              className="batch-button batch-button-danger"
               disabled={jobs.length === 0}
             >
               {t("cancelAll")}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -201,10 +245,9 @@ export function BatchView({ onViewTranscript }: BatchViewProps) {
       )}
 
       {jobs.length === 0 && (
-        <div className="batch-empty">
-          <p className="batch-empty-text">
-            {t("emptyBatch")}
-          </p>
+        <div className="empty-state">
+          <div className="empty-state-icon">📎</div>
+          <div className="empty-state-message">{t("emptyBatch")}</div>
         </div>
       )}
     </div>
@@ -217,7 +260,7 @@ interface BatchJobItemProps {
   onCancel: () => void;
   onRetry: () => void;
   onViewTranscript: () => void;
-  t: (key: string) => string;
+  t: (key: any) => string;
 }
 
 function BatchJobItem({
@@ -239,16 +282,18 @@ function BatchJobItem({
         <span className="batch-job-title">
           {job.videoInfo?.title || job.url}
         </span>
-        <span className="batch-job-source">
-          {job.state === "completed" && job.transcript?.source === "captions" && t("captions")}
-          {(job.state === "transcribing" || job.state === "downloading" || job.state === "loading-model") && t("localWhisper")}
-        </span>
       </div>
 
       <div className="batch-job-status">
         <span className={`batch-job-state batch-job-state-${job.state}`}>
           {label}
         </span>
+        {job.state === "completed" && job.transcript?.source === "captions" && (
+          <Badge variant="muted">{t("captions")}</Badge>
+        )}
+        {(job.state === "transcribing" || job.state === "downloading" || job.state === "loading-model") && (
+          <Badge variant="accent">{t("localWhisper")}</Badge>
+        )}
         {(job.state === "transcribing" || job.state === "downloading") && job.progress !== undefined && (
           <div className="batch-job-progress">
             <div className="batch-job-progress-bar">
@@ -273,24 +318,24 @@ function BatchJobItem({
 
       <div className="batch-job-actions">
         {job.state === "queued" && (
-          <button onClick={onCancel} className="batch-job-button">
+          <Button variant="ghost" size="sm" onClick={onCancel}>
             {t("remove")}
-          </button>
+          </Button>
         )}
         {isActive && (
-          <button onClick={onCancel} className="batch-job-button batch-job-button-cancel">
+          <Button variant="danger" size="sm" onClick={onCancel}>
             {t("cancel")}
-          </button>
+          </Button>
         )}
         {job.state === "failed" && (
-          <button onClick={onRetry} className="batch-job-button">
+          <Button variant="secondary" size="sm" onClick={onRetry}>
             {t("retry")}
-          </button>
+          </Button>
         )}
         {job.state === "completed" && (
-          <button onClick={onViewTranscript} className="batch-job-button">
+          <Button variant="secondary" size="sm" onClick={onViewTranscript}>
             {t("openTranscript")}
-          </button>
+          </Button>
         )}
       </div>
     </div>

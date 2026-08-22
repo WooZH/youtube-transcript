@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import "./App.css";
-import { UrlInput } from "./components/UrlInput";
+import { UrlInput, type UrlInputHandle } from "./components/UrlInput";
 import { ProgressView } from "./components/ProgressView";
 import { VideoPreview } from "./components/VideoPreview";
 import { NoCaptions } from "./components/NoCaptions";
@@ -8,6 +8,7 @@ import { TranscriptView } from "./components/TranscriptView";
 import { BatchView } from "./components/BatchView";
 import { HistoryView } from "./components/HistoryView";
 import { ModelSelector, getSavedModel, saveModel } from "./components/ModelSelector";
+import { Button } from "./components/primitives";
 import { useTranscription } from "./hooks/useTranscription";
 import { persistTranscript } from "./lib/persistence";
 import { LanguageProvider, useLanguage } from "./lib/i18n";
@@ -21,6 +22,7 @@ function AppContent() {
   const [viewMode, setViewMode] = useState<ViewMode>("single");
   const [viewedTranscript, setViewedTranscript] = useState<Transcript | null>(null);
   const [selectedModel, setSelectedModel] = useState(getSavedModel);
+  const urlInputRef = useRef<UrlInputHandle>(null);
 
   const {
     state,
@@ -73,6 +75,7 @@ function AppContent() {
           </p>
 
           <UrlInput
+            ref={urlInputRef}
             onSubmit={(url) => handleGetVideoInfo(url)}
             disabled={false}
           />
@@ -85,15 +88,16 @@ function AppContent() {
                 saveModel(model);
               }}
             />
-            <button
+            <Button
+              variant="primary"
+              size="lg"
               onClick={() => {
-                const input = document.querySelector<HTMLInputElement>(".url-input");
-                if (input?.value.trim()) handleGetVideoInfo(input.value.trim());
+                const value = urlInputRef.current?.getValue();
+                if (value) handleGetVideoInfo(value);
               }}
-              className="transcribe-button"
             >
               {t("transcribe")}
-            </button>
+            </Button>
           </div>
         </div>
       );
@@ -124,6 +128,7 @@ function AppContent() {
         <NoCaptions
           videoInfo={state.videoInfo}
           url={state.url}
+          selectedModel={selectedModel}
           onTranscribe={handleTranscribeFromNoCaptions}
           onReset={handleReset}
         />
@@ -141,23 +146,23 @@ function AppContent() {
 
     if (state.type === "error") {
       return (
-        <div className="error-view">
-          <div className="error-icon">!</div>
-          <div className="error-message">{state.message}</div>
-          <button onClick={handleReset} className="retry-button">
+        <div className="error-state">
+          <div className="error-state-icon">!</div>
+          <div className="error-state-message">{state.message}</div>
+          <Button variant="primary" size="lg" onClick={handleReset}>
             {t("tryAgain")}
-          </button>
+          </Button>
         </div>
       );
     }
 
     if (state.type === "cancelled") {
       return (
-        <div className="cancelled-view">
-          <div className="cancelled-message">{t("cancelled")}</div>
-          <button onClick={handleReset} className="retry-button">
+        <div className="error-state">
+          <div className="error-state-message">{t("cancelled")}</div>
+          <Button variant="primary" size="lg" onClick={handleReset}>
             {t("tryAgain")}
-          </button>
+          </Button>
         </div>
       );
     }
@@ -168,49 +173,56 @@ function AppContent() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1 className="app-title">YouTube Transcript</h1>
         <nav className="app-nav">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            active={viewMode === "single"}
             onClick={() => {
               setViewMode("single");
               setViewedTranscript(null);
             }}
-            className={`nav-button ${viewMode === "single" ? "nav-button-active" : ""}`}
           >
             {t("singleVideo")}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            active={viewMode === "batch"}
             onClick={() => {
               setViewMode("batch");
               setViewedTranscript(null);
             }}
-            className={`nav-button ${viewMode === "batch" ? "nav-button-active" : ""}`}
           >
             {t("batch")}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            active={viewMode === "history"}
             onClick={() => {
               setViewMode("history");
               setViewedTranscript(null);
             }}
-            className={`nav-button ${viewMode === "history" ? "nav-button-active" : ""}`}
           >
             {t("history")}
-          </button>
+          </Button>
         </nav>
-        <button onClick={toggle} className="lang-toggle">
+        <Button variant="ghost" size="sm" onClick={toggle}>
           {lang === "zh" ? "EN" : "中"}
-        </button>
+        </Button>
       </header>
 
       <main className="app-main">
-        {viewMode === "single" && renderSingleMode()}
-        {viewMode === "batch" && (
-          <BatchView onViewTranscript={handleViewTranscript} />
-        )}
-        {viewMode === "history" && (
-          <HistoryView onViewTranscript={handleViewTranscript} />
-        )}
+        <div className="view-enter" key={viewMode}>
+          {viewMode === "single" && renderSingleMode()}
+          {viewMode === "batch" && (
+            <BatchView onViewTranscript={handleViewTranscript} />
+          )}
+          {viewMode === "history" && (
+            <HistoryView onViewTranscript={handleViewTranscript} />
+          )}
+        </div>
       </main>
     </div>
   );
