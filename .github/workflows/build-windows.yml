@@ -56,9 +56,10 @@ jobs:
       - name: Bundle ffmpeg (static build)
         shell: pwsh
         run: |
-          curl.exe -sL -o ffmpeg.zip https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip
+          curl.exe -fL --retry 3 -o ffmpeg.zip https://github.com/BtbN/FFmpeg-Builds/releases/latest/download/ffmpeg-master-latest-win64-gpl.zip
           Expand-Archive ffmpeg.zip -DestinationPath ffmpeg-tmp
           $exe = Get-ChildItem -Recurse ffmpeg-tmp -Filter ffmpeg.exe | Select-Object -First 1
+          if (-not $exe) { throw "ffmpeg.exe not found in downloaded archive" }
           Copy-Item $exe.FullName src-tauri\resources\worker\bin\ffmpeg.exe
 
       - name: Bundle Whisper model (${{ github.event.inputs.model }})
