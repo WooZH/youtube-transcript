@@ -49,11 +49,41 @@ npm run lint           # oxlint 检查
 npm run build          # 前端生产构建
 
 npm run tauri build    # 生产构建桌面应用
-./build-app.sh         # 构建 .app 并打包 worker/.venv 进 bundle，重打 DMG
-                       # （注意：脚本内含本机绝对路径，需按环境调整）
 
 # Chrome 扩展（apps/extension 有独立 package.json）
 cd apps/extension && npm install && npm run build
+```
+
+## 打包分发
+
+| 目标平台 | 命令 | 产物 |
+|---|---|---|
+| Apple Silicon (arm64) | `./build-app.sh tiny small` | 每个模型变体一个 DMG |
+| Intel Mac (x86_64) | `TARGET=x86_64-apple-darwin ./build-app.sh small` | x86_64 DMG |
+| Windows | GitHub Actions 手动触发 | NSIS 安装包（.exe） |
+
+每个 DMG/安装包内置**指定的一款 Whisper 模型**，离线转录开箱即用；不传参数默认 `small`。
+
+### 各平台前置条件
+
+- **macOS (arm64)**：`worker/.venv` 虚拟环境 + 系统 PATH 中有 ffmpeg
+- **macOS (Intel 构建)**：需安装 Rosetta 2，并用 x86_64 Python 建独立虚拟环境：
+  ```bash
+  arch -x86_64 /usr/bin/python3 -m venv worker/.venv-x86_64
+  arch -x86_64 worker/.venv-x86_64/bin/pip install -r worker/requirements.txt
+  ```
+- **Windows**：无法从 macOS 交叉编译，通过 GitHub Actions 构建：
+  1. 打开仓库 → Actions → **Build Windows Installer** → Run workflow
+  2. 选择要内置的 Whisper 模型，等待构建完成
+  3. 从 Artifacts 下载 NSIS 安装包（内置 ffmpeg.exe，无需用户安装依赖）
+
+### 模型来源
+
+构建脚本从本地模型目录读取（`~/Library/Application Support/YouTube Transcript/models/whisper-cpp/`），缺失时可手动下载：
+
+```bash
+curl -L -o "$HOME/Library/Application Support/YouTube Transcript/models/whisper-cpp/ggml-tiny.bin" \
+  "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.bin"
 ```
 
 ## 本地 HTTP API

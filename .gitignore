@@ -28,9 +28,13 @@ src-tauri/target/
 
 # Python
 worker/.venv/
+worker/.venv-x86_64/
 __pycache__/
 *.pyc
 
 # Models (large binary files)
 *.bin
 .gstack/
+
+# Tauri bundle staging (populated by build scripts/CI)
+src-tauri/resources/
