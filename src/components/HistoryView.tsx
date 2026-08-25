@@ -184,7 +184,16 @@ export function HistoryView({ onViewTranscript }: HistoryViewProps) {
                 <div className="history-item-title">{entry.title}</div>
                 <div className="history-item-meta">
                   {entry.channel && (
-                    <span className="history-item-channel">{entry.channel}</span>
+                    <>
+                      <span className="history-item-channel">{entry.channel}</span>
+                      <span className="history-item-separator">·</span>
+                    </>
+                  )}
+                  {entry.duration != null && (
+                    <>
+                      <span className="history-item-duration">{formatDuration(entry.duration)}</span>
+                      <span className="history-item-separator">·</span>
+                    </>
                   )}
                   <Badge
                     variant={entry.source === "whisper" ? "accent" : "muted"}

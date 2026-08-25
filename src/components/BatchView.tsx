@@ -289,10 +289,10 @@ function BatchJobItem({
           {label}
         </span>
         {job.state === "completed" && job.transcript?.source === "captions" && (
-          <Badge variant="muted">{t("captions")}</Badge>
+          <Badge variant="muted">{t("youtubeCaptions")}</Badge>
         )}
         {(job.state === "transcribing" || job.state === "downloading" || job.state === "loading-model") && (
-          <Badge variant="accent">{t("localWhisper")}</Badge>
+          <Badge variant="accent">{t("whisperLabel")}</Badge>
         )}
         {(job.state === "transcribing" || job.state === "downloading") && job.progress !== undefined && (
           <div className="batch-job-progress">

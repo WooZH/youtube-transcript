@@ -5,7 +5,7 @@ import { ExportMenu } from "./ExportMenu";
 import { useState, useMemo, useRef, useCallback } from "react";
 import { formatDuration } from "../lib/utils";
 import { useLanguage } from "../lib/i18n";
-import { Button } from "./primitives";
+import { Badge, Button } from "./primitives";
 
 interface TranscriptViewProps {
   transcript: Transcript;
@@ -97,9 +97,12 @@ export function TranscriptView({ transcript, onReset }: TranscriptViewProps) {
           )}
         </div>
 
-        <div className="source-badge">
-          <span className="source-dot">●</span> {sourceLabel}
-        </div>
+        <Badge
+          variant={transcript.source === "whisper" ? "accent" : "muted"}
+          className="source-badge"
+        >
+          {sourceLabel}
+        </Badge>
       </div>
 
       <div className="transcript-toolbar">

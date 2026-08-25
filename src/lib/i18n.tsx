@@ -61,7 +61,7 @@ const translations = {
 
   // TranscriptView
   youtubeCaptions: { zh: "YouTube 字幕", en: "YouTube Captions" },
-  whisperLabel: { zh: "Whisper", en: "Whisper" },
+  whisperLabel: { zh: "本地 Whisper", en: "Local Whisper" },
   copyText: { zh: "复制纯文本", en: "Copy text only" },
   copied: { zh: "已复制！", en: "Copied!" },
   copy: { zh: "复制", en: "Copy" },
