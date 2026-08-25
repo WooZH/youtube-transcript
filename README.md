@@ -12,6 +12,8 @@ Paste a video link and the app grabs the official captions automatically. No cap
 
 ## Highlights
 
+> 💨 **Real-world test**: a 69-minute video — downloaded in 1m18s, transcribed in 1m53s. Under 3 minutes end to end.
+
 ### 🔒 Data Security
 
 - **Fully local processing**: audio is downloaded to a local temp folder and transcribed on-device — **nothing ever leaves your computer**. No telemetry, no tracking
@@ -19,17 +21,17 @@ Paste a video link and the app grabs the official captions automatically. No cap
 - **Clean by design**: temp files are deleted automatically after each job
 - **Open source & auditable**: the entire data flow is public and reviewable
 
-### ⚡ Estimated Transcription Speed
+### ⚡ Transcription Speed
 
-On Apple Silicon Macs; actual speed depends on your hardware and model:
+Benchmarked on an Apple Silicon Mac with the Small model (69-minute video transcribed in 1m53s); other models are estimated from relative compute cost:
 
-| Model | vs. realtime | 10-min video ≈ |
-|---|---|---|
-| Tiny | ~10× | ~1 min |
-| Base | ~7× | ~1.5 min |
-| Small ⭐ | ~4× | ~2.5 min |
-| Medium | ~2× | ~5 min |
-| Large V3 | ~1× | ~10 min |
+| Model | vs. realtime | 10-min video ≈ | 1-hour video ≈ |
+|---|---|---|---|
+| Tiny | ~100× | ~10 s | <1 min |
+| Base | ~60× | ~10 s | ~1 min |
+| Small ⭐ | **~37× (measured)** | ~20 s | ~2 min |
+| Medium | ~12× | ~50 s | ~5 min |
+| Large V3 | ~6× | ~1.5 min | ~10 min |
 
 ### 📤 Export Formats
 
