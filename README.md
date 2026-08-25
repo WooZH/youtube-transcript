@@ -31,9 +31,11 @@
 | Mac（Apple Silicon / M 系列） | `YouTube Transcript_2.0.0_small_aarch64.dmg` | **推荐**，速度与精度均衡 |
 | Mac（Apple Silicon / M 系列） | `..._tiny_aarch64.dmg` | 追求速度、磁盘紧张 |
 | Intel Mac | `..._small_x86_64.dmg` / `..._tiny_x86_64.dmg` | 老款 Intel 芯片 Mac |
-| Windows 10 / 11 | `YouTube Transcript_2.0.0_small_setup.exe` | 安装包内置 ffmpeg，无需其他依赖 |
+| Windows 10 / 11 | `YouTube Transcript_2.0.0_small_setup.exe` | 同上 |
 
 从 [Releases 页面](https://github.com/WooZH/youtube-transcript/releases) 下载最新版本。
+
+所有安装包均已内置转录模型与 ffmpeg，**无需安装任何额外依赖**。
 
 > 首次打开提示"未验证的开发者"：右键点击应用 → **打开**（macOS），或在 SmartScreen 提示中点"仍要运行"（Windows）。
 
@@ -67,7 +69,7 @@
 应用会自动检测并提示切换到本地 AI 转录，一键完成。
 
 **Mac 上还需要安装什么？**
-需要 [ffmpeg](https://ffmpeg.org)（`brew install ffmpeg`），用于音频提取。Windows 版已内置。
+不需要。安装包已内置 ffmpeg 与转录模型，开箱即用。（仅从源码开发运行时才需要系统安装 ffmpeg）
 
 ---
 

@@ -38,3 +38,6 @@ __pycache__/
 
 # Tauri bundle staging (populated by build scripts/CI)
 src-tauri/resources/
+
+# Build-time ffmpeg cache
+.ffmpeg-cache/
