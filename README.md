@@ -10,11 +10,35 @@
 
 Paste a video link and the app grabs the official captions automatically. No captions available? The built-in AI engine transcribes the speech locally. No sign-up, no API keys, and your media never leaves your device.
 
-## Why YouTube Transcript
+## Highlights
 
-- **Privacy first** — transcription runs on-device via whisper.cpp. No cloud services involved, ideal for sensitive content
+### 🔒 Data Security
+
+- **Fully local processing**: audio is downloaded to a local temp folder and transcribed on-device — **nothing ever leaves your computer**. No telemetry, no tracking
+- **Zero accounts**: no sign-up, no login, no API keys
+- **Clean by design**: temp files are deleted automatically after each job
+- **Open source & auditable**: the entire data flow is public and reviewable
+
+### ⚡ Estimated Transcription Speed
+
+On Apple Silicon Macs; actual speed depends on your hardware and model:
+
+| Model | vs. realtime | 10-min video ≈ |
+|---|---|---|
+| Tiny | ~10× | ~1 min |
+| Base | ~7× | ~1.5 min |
+| Small ⭐ | ~4× | ~2.5 min |
+| Medium | ~2× | ~5 min |
+| Large V3 | ~1× | ~10 min |
+
+### 📤 Export Formats
+
+**TXT** (plain text / with timestamps), **SRT** (standard subtitles, ready for video editors), **JSON** (structured data for further processing) — one-click export via native save dialogs.
+
+### More Highlights
+
 - **Works without captions** — when official captions are missing, it automatically falls back to local AI speech recognition
-- **Zero setup** — installers bundle a transcription model, so it works offline right after install
+- **Zero setup** — installers bundle a transcription model and ffmpeg, so it works offline right after install
 - **Batch processing** — queue multiple links and let it churn through them
 
 ## Features
