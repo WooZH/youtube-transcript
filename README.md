@@ -23,7 +23,7 @@ Paste a video link and the app grabs the official captions automatically. No cap
 
 ### ⚡ Transcription Speed
 
-Benchmarked on an Apple Silicon Mac with the Small model (69-minute video transcribed in 1m53s); other models are estimated from relative compute cost:
+Benchmarked on an Apple M2 with the Small model (69-minute video transcribed in 1m53s); other models are estimated from relative compute cost:
 
 | Model | vs. realtime | 10-min video ≈ | 1-hour video ≈ |
 |---|---|---|---|
