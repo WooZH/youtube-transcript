@@ -180,6 +180,15 @@ export function HistoryView({ onViewTranscript }: HistoryViewProps) {
               className="history-item"
               onClick={() => handleOpenTranscript(entry)}
             >
+              {entry.videoId && (
+                <img
+                  className="history-item-thumb"
+                  src={`https://img.youtube.com/vi/${entry.videoId}/mqdefault.jpg`}
+                  alt=""
+                  loading="lazy"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              )}
               <div className="history-item-content">
                 <div className="history-item-title">{entry.title}</div>
                 <div className="history-item-meta">

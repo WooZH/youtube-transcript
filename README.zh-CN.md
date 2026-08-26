@@ -39,6 +39,7 @@
 
 ### 更多亮点
 
+- **100+ 种语言字幕**：YouTube 支持 100 多种语言的字幕，应用自动检测并列出该视频所有可用语言，自由切换任意语言
 - **无字幕也能转**：官方字幕抓不到时，自动切换本地 AI 语音识别，多语言视频都能处理
 - **开箱即用**：安装包内置转录模型与 ffmpeg，装完就能离线工作
 - **一次拖一批**：批量粘贴多个链接，排队逐个处理，挂机等结果
@@ -60,10 +61,10 @@
 
 | 你的设备 | 选择版本 | 说明 |
 |---|---|---|
-| Mac（Apple Silicon / M 系列） | `YouTube Transcript_2.0.0_small_aarch64.dmg` | **推荐**，速度与精度均衡 |
+| Mac（Apple Silicon / M 系列） | `YouTube Transcript_2.1.0_small_aarch64.dmg` | **推荐**，速度与精度均衡 |
 | Mac（Apple Silicon / M 系列） | `..._tiny_aarch64.dmg` | 追求速度、磁盘紧张 |
 | Intel Mac | `..._small_x86_64.dmg` / `..._tiny_x86_64.dmg` | 老款 Intel 芯片 Mac |
-| Windows 10 / 11 | `YouTube Transcript_2.0.0_small_setup.exe` | 同上 |
+| Windows 10 / 11 | `YouTube Transcript_2.1.0_small_setup.exe` | 同上 |
 
 从 [Releases 页面](https://github.com/WooZH/youtube-transcript/releases) 下载最新版本。
 

@@ -1631,6 +1631,16 @@ body {
   background: var(--bg-secondary);
 }
 
+.history-item-thumb {
+  width: 120px;
+  height: 68px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  margin-right: var(--space-3);
+  flex-shrink: 0;
+  background: var(--bg-tertiary);
+}
+
 .history-item-content {
   flex: 1;
   min-width: 0;

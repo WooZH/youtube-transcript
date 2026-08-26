@@ -39,6 +39,7 @@ Benchmarked on an Apple M2 with the Small model (69-minute video transcribed in 
 
 ### More Highlights
 
+- **100+ languages** — YouTube supports captions in over 100 languages; the app detects and lists every available language for each video. Switch freely between any supported language
 - **Works without captions** — when official captions are missing, it automatically falls back to local AI speech recognition
 - **Zero setup** — installers bundle a transcription model and ffmpeg, so it works offline right after install
 - **Batch processing** — queue multiple links and let it churn through them
@@ -60,10 +61,10 @@ Benchmarked on an Apple M2 with the Small model (69-minute video transcribed in 
 
 | Your device | Pick this file | Notes |
 |---|---|---|
-| Mac (Apple Silicon) | `YouTube Transcript_2.0.0_small_aarch64.dmg` | **Recommended** — balanced speed & accuracy |
+| Mac (Apple Silicon) | `YouTube Transcript_2.1.0_small_aarch64.dmg` | **Recommended** — balanced speed & accuracy |
 | Mac (Apple Silicon) | `..._tiny_aarch64.dmg` | Faster, lighter |
 | Intel Mac | `..._small_x86_64.dmg` / `..._tiny_x86_64.dmg` | Older Intel Macs |
-| Windows 10 / 11 | `YouTube Transcript_2.0.0_small_setup.exe` | Same as above |
+| Windows 10 / 11 | `YouTube Transcript_2.1.0_small_setup.exe` | Same as above |
 
 Download the latest version from the [Releases page](https://github.com/WooZH/youtube-transcript/releases).
 
