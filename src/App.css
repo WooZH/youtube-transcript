@@ -193,6 +193,33 @@ body {
   letter-spacing: -0.01em;
 }
 
+/* Segmented control style nav */
+.app-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-full);
+}
+
+.app-nav .btn--ghost {
+  border-radius: var(--radius-full);
+}
+
+.app-nav .btn--ghost:hover:not(:disabled) {
+  background: transparent;
+  color: var(--fg-primary);
+}
+
+.app-nav .btn--ghost.btn--active {
+  background: var(--bg-primary);
+  color: var(--fg-primary);
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.12),
+    0 0 0 0.5px var(--border-subtle);
+}
+
 .app-main {
   flex: 1;
   display: flex;
